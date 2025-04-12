@@ -2,7 +2,10 @@ name: Build APK on Release
 
 on:
   release:
-    types: [published]  # Triggers when a GitHub release is published
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
   build:

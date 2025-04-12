@@ -77,7 +77,7 @@ class _SDMWithKnownVarianceState extends State<SDMWithKnownVariance> {
             ),
             Text(
               resultadoCDF != null
-                  ? 'P(Z ≤ z) = ${(resultadoCDF! * 100).toStringAsFixed(2)}%'
+                  ? 'P(Z ≤ z) = ${(resultadoCDF! * 100).toStringAsFixed(3)}%'
                   : '',
               style: const TextStyle(fontSize: 18),
             ),

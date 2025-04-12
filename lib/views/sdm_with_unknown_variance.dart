@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_1st_test/utils/math.dart';
 import 'dart:math';
 
 class SDMWithUnknownVariance extends StatefulWidget {
@@ -89,7 +90,7 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
         media = mediaLocal;
         desviacion = desviacionLocal;
         z = zLocal;
-        // resultTCDF = tCDF(zLocal, degreesOfFreedom);
+        resultTCDF = studentsTArea(zLocal, degreesOfFreedom);
       });
     } else {
       setState(() {
@@ -178,19 +179,38 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
                     onChanged: (_) => calcularEstadisticas(),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    z != null
-                        ? 'Valor estandarizado (t): ${z!.toStringAsFixed(5)}'
-                        : 'Valor estanzarizado (t): ---',
-                    style: const TextStyle(fontSize: 18),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(fontSize: 18, color: Colors.black), // Estilo base
+                      children: [
+                        const TextSpan(text: 'Valor estandarizado ('),
+                        TextSpan(
+                          text: 't',
+                          style: const TextStyle(fontStyle: FontStyle.italic), // "t" en cursiva
+                        ),
+                        TextSpan(
+                          text: z != null ? '): ${z!.toStringAsFixed(5)}' : '): ---',
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  /*Text(
-                    resultTCDF != null
-                        ? 'P(Z ≤ z) = ${(resultTCDF! * 100).toStringAsFixed(2)}%'
-                        : 'P(Z ≤ z): ---',
-                    style: const TextStyle(fontSize: 18),
-                  ),*/
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(fontSize: 18, color: Colors.black), // Estilo base
+                      children:[
+                        const TextSpan(text: 'Probabilidad acumulada '),
+                        TextSpan(
+                          text: 'P(T ≤ t)',
+                          style: const TextStyle(fontStyle: FontStyle.italic), // "P(T ≤ t" en cursiva
+                        ),
+                        const TextSpan(text: ': '),
+                        TextSpan(
+                          text: resultTCDF != null ? (resultTCDF!).toStringAsFixed(5) : '---',
+                        ),
+                      ]
+                    ),
+                  ),
                 ],
               ),
             ),
