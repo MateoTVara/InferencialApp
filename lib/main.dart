@@ -35,14 +35,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Lista de vistas
   final List<Widget> _pages = [
-    const SDMWithKnownVariance(), // La vista para DME con varianza conocida
-    const SDMWithUnknownVariance(), // La vista para DME con varianza desconocida
+    const SDMWithKnownVariance(), // La vista para DMM con varianza conocida
+    const SDMWithUnknownVariance(), // La vista para DMM con varianza desconocida
+    const SDDMWithKnownVariance(), // La vista para DMDM con varianza conocida
+    const SDDMWithUnknownVariance(), // La vista para DMDM con varianza desconocida
     const AboutPage(), // Otras vistas, como Acerca de
   ];
 
   final List<String> _titles = [
-    'DME con varianza conocida',  // Título para la DME con varianza conocida
-    'DME con varianza desconocida', // Título para la DME con varianza desconocida
+    'DMM con varianza conocida',  // Título para la DMM con varianza conocida
+    'DMM con varianza desconocida', // Título para la DMM con varianza desconocida
+    'DMDM con varianza conocida', // Título para la DMDM con varianza conocida
+    'DMDM con varianza desconocida', // Título para la DMDM con varianza desconocida
     'Acerca de',       // Título para la vista "Acerca de"
   ];
 
@@ -78,17 +82,33 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             ListTile(
               leading: const Icon(Icons.calculate),
-              title: const Text('DME con varianza conocida'),
+              title: const Text('DMM con varianza conocida'),
               onTap: () {
-                _onItemTapped(0); // Cambiar a la vista de DME con varianza conocida
+                _onItemTapped(0); // Cambiar a la vista de DMM con varianza conocida
                 Navigator.pop(context); // Cerrar el drawer
               },
             ),
             ListTile(
               leading: const Icon(Icons.calculate),
-              title: const Text('DME con varianza desconocida'),
+              title: const Text('DMM con varianza desconocida'),
               onTap: () {
-                _onItemTapped(1); // Cambiar a la vista de DME con varianza desconocida
+                _onItemTapped(1); // Cambiar a la vista de DMM con varianza desconocida
+                Navigator.pop(context); // Cerrar el drawer
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.calculate),
+              title: const Text('DMDM con varianza conocida'),
+              onTap: () {
+                _onItemTapped(2); // Cambiar a la vista de DMDM con varianza conocida
+                Navigator.pop(context); // Cerrar el drawer
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.calculate),
+              title: const Text('DMDM con varianza desconocida'),
+              onTap: () {
+                _onItemTapped(3); // Cambiar a la vista de DMDM con varianza desconocida
                 Navigator.pop(context); // Cerrar el drawer
               },
             ),
@@ -96,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
               leading: const Icon(Icons.info_outline),
               title: const Text('Acerca de'),
               onTap: () {
-                _onItemTapped(2); // Cambiar a la vista "Acerca de"
+                _onItemTapped(4); // Cambiar a la vista "Acerca de"
                 Navigator.pop(context); // Cerrar el drawer
               },
             ),

@@ -14,19 +14,23 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
   List<FocusNode> focusNodes = [];
   final TextEditingController populationMeanController = TextEditingController();
   final TextEditingController sampleMeanChanceController = TextEditingController();
+  final TextEditingController sampleMeanChance2Controller = TextEditingController();
 
-  double? media;
-  double? desviacion;
-  double? z;
-  double? resultTCDF;
+  String selectedOption = "Menor P(T ≤ t)";
+  double? mean;
+  double? stdDeviation;
+  double? resultadoT;
+  double? resultadoT1;
+  double? resultadoT2;
+  double? resultadoProbabilidad;
 
   @override
   void initState() {
     super.initState();
-    _addCampo();
+    _addField();
   }
 
-  void _addCampo() {
+  void _addField() {
     final controller = TextEditingController();
     final focusNode = FocusNode();
 
@@ -35,7 +39,7 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
       final isLast = index == focusNodes.length - 1;
 
       if (focusNode.hasFocus && isLast) {
-        _addCampo();
+        _addField();
       }
 
       if (!focusNode.hasFocus &&
@@ -43,7 +47,7 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
           controllers.length > 1) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            _removeCampo(index);
+            _removeField(index);
           }
         });
       }
@@ -55,48 +59,96 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
     });
   }
 
-  void _removeCampo(int index) {
+  void _removeField(int index) {
     setState(() {
       controllers[index].dispose();
       focusNodes[index].dispose();
       controllers.removeAt(index);
       focusNodes.removeAt(index);
     });
-    calcularEstadisticas();
+    calculateStatistics();
   }
 
-  void calcularEstadisticas() {
-    List<double> valores = controllers
+  void calculateStatistics() {
+    List<double> values = controllers
         .map((controller) => double.tryParse(controller.text))
-        .where((valor) => valor != null)
-        .map((valor) => valor!)
+        .where((value) => value != null)
+        .map((value) => value!)
         .toList();
-    
+
     final double? mu = double.tryParse(populationMeanController.text);
-    final double? xBar = double.tryParse(sampleMeanChanceController.text);
+    final double? xBar1 = double.tryParse(sampleMeanChanceController.text);
+    final double? xBar2 = double.tryParse(sampleMeanChance2Controller.text);
 
-    if (valores.length >= 2 && mu != null && xBar != null) {
-      double suma = valores.reduce((a, b) => a + b);
-      int populationDegreesOfFreedom = valores.length;
-      double mediaLocal = suma / populationDegreesOfFreedom;
-      int degreesOfFreedom = populationDegreesOfFreedom - 1;
+    if (values.length >= 2 && mu != null) {
+      double sum = values.reduce((a, b) => a + b);
+      int n = values.length;
+      double localMean = sum / n;
+      double degreesOfFreedom = n - 1;
 
-      double sumaCuadrados = valores.fold(0.0, (acum, x) => acum + pow(x - mediaLocal, 2));
-      double desviacionLocal = sqrt(sumaCuadrados / (degreesOfFreedom));
-
-      double zLocal = (xBar - mu) / (desviacionLocal / sqrt(valores.length));
+      double squaredSum = values.fold(0.0, (acc, x) => acc + pow(x - localMean, 2));
+      double localStdDev = sqrt(squaredSum / degreesOfFreedom);
 
       setState(() {
-        media = mediaLocal;
-        desviacion = desviacionLocal;
-        z = zLocal;
-        resultTCDF = studentsTArea(zLocal, degreesOfFreedom);
+        mean = localMean;
+        stdDeviation = localStdDev;
       });
+
+      if (selectedOption == "Menor P(T ≤ t)") {
+        if (xBar1 == null) {
+          setState(() {
+            resultadoT = resultadoProbabilidad = null;
+            resultadoT1 = resultadoT2 = null;
+          });
+          return;
+        }
+        final double t = (xBar1 - mu) / (localStdDev / sqrt(n));
+        setState(() {
+          resultadoT = t;
+          resultadoProbabilidad = studentsTArea(t, degreesOfFreedom);
+          resultadoT1 = resultadoT2 = null;
+        });
+      }
+      else if (selectedOption == "Mayor P(t ≤ T)") {
+        if (xBar1 == null) {
+          setState(() {
+            resultadoT = resultadoProbabilidad = null;
+            resultadoT1 = resultadoT2 = null;
+          });
+          return;
+        }
+        final double t = (xBar1 - mu) / (localStdDev / sqrt(n));
+        setState(() {
+          resultadoT = t;
+          resultadoProbabilidad = 1 - studentsTArea(t, degreesOfFreedom);
+          resultadoT1 = resultadoT2 = null;
+        });
+      }
+      else if (selectedOption == "En medio (t_1 ≤ T ≤ t_2)") {
+        if (xBar1 == null || xBar2 == null) {
+          setState(() {
+            resultadoT1 = resultadoT2 = resultadoProbabilidad = null;
+            resultadoT = null;
+          });
+          return;
+        }
+        final double t1 = (xBar1 - mu) / (localStdDev / sqrt(n));
+        final double t2 = (xBar2 - mu) / (localStdDev / sqrt(n));
+        final double lower = min(t1, t2);
+        final double upper = max(t1, t2);
+        setState(() {
+          resultadoT1 = t1;
+          resultadoT2 = t2;
+          resultadoProbabilidad = studentsTArea(upper, degreesOfFreedom) - 
+                                studentsTArea(lower, degreesOfFreedom);
+          resultadoT = null;
+        });
+      }
     } else {
       setState(() {
-        media = null;
-        desviacion = null;
-        z = null;
+        mean = null;
+        stdDeviation = null;
+        resultadoT = resultadoT1 = resultadoT2 = resultadoProbabilidad = null;
       });
     }
   }
@@ -117,7 +169,6 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
     return Scaffold(
       body: Row(
         children: [
-          // LADO IZQUIERDO: Inputs
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -130,16 +181,25 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
                       controller: controllers[index],
                       focusNode: focusNodes[index],
                       keyboardType: TextInputType.number,
+                      textInputAction: index < controllers.length - 1 
+                          ? TextInputAction.next 
+                          : TextInputAction.done,
                       decoration: InputDecoration(labelText: 'Dato ${index + 1}'),
-                      onChanged: (_) => calcularEstadisticas(),
+                      onChanged: (_) => calculateStatistics(),
+                      onSubmitted: (_) {
+                        if (index < focusNodes.length - 1) {
+                          FocusScope.of(context).requestFocus(focusNodes[index + 1]);
+                        } else {
+                          // If it's the last field, unfocus
+                          focusNodes[index].unfocus();
+                        }
+                      },
                     ),
                   );
                 },
               ),
             ),
           ),
-
-          // LADO DERECHO: Resultados
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -152,16 +212,16 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    media != null
-                        ? 'Media muestral: ${media!.toStringAsFixed(5)}'
+                    mean != null
+                        ? 'Media muestral: ${mean!.toStringAsFixed(5)}'
                         : 'Media: ---',
                     style: const TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    desviacion != null
-                        ? 'Desviación estándar muestral (x̄): ${desviacion!.toStringAsFixed(5)}'
-                        : 'Desviación estándar muestral (x̄): ---',
+                    stdDeviation != null
+                        ? 'Desviación estándar muestral: ${stdDeviation!.toStringAsFixed(5)}'
+                        : 'Desviación estándar muestral: ---',
                     style: const TextStyle(fontSize: 18),
                   ),
                   const SizedBox(height: 8),
@@ -169,48 +229,100 @@ class _SDMWithUnknownVarianceState extends State<SDMWithUnknownVariance> {
                     controller: populationMeanController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(labelText: 'Media poblacional (μ)'),
-                    onChanged: (_) => calcularEstadisticas(),
+                    onChanged: (_) => calculateStatistics(),
                   ),
                   const SizedBox(height: 8),
+                  SizedBox(
+                    width: 300, // Or use MediaQuery to make it responsive
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: selectedOption,
+                      items: const [
+                        DropdownMenuItem(
+                          value: "Menor P(T ≤ t)",
+                          child: Text("Menor P(T ≤ t)"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Mayor P(t ≤ T)",
+                          child: Text("Mayor P(t ≤ T)"),
+                        ),
+                        DropdownMenuItem(
+                          value: "En medio (t_1 ≤ T ≤ t_2)",
+                          child: Text("En medio (t_1 ≤ T ≤ t_2)"),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedOption = value!;
+                          sampleMeanChance2Controller.clear();
+                          resultadoT = resultadoT1 = resultadoT2 = resultadoProbabilidad = null;
+                        });
+                        calculateStatistics();
+                      },
+                    ),
+                  ),
                   TextField(
                     controller: sampleMeanChanceController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Media muestral  a evaluar (x̄)'),
-                    onChanged: (_) => calcularEstadisticas(),
+                    decoration: InputDecoration(
+                      labelText: selectedOption == "En medio (t_1 ≤ T ≤ t_2)"
+                          ? 'Media muestral 1 (x̄₁)'
+                          : 'Media muestral (x̄)',
+                    ),
+                    onChanged: (_) => calculateStatistics(),
                   ),
-                  const SizedBox(height: 8),
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(fontSize: 18, color: Colors.black), // Estilo base
+                  if (selectedOption == "En medio (t_1 ≤ T ≤ t_2)")
+                    TextField(
+                      controller: sampleMeanChance2Controller,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Media muestral 2 (x̄₂)'),
+                      onChanged: (_) => calculateStatistics(),
+                    ),
+                  const SizedBox(height: 16),
+                  if (selectedOption == "En medio (t_1 ≤ T ≤ t_2)" && resultadoT1 != null && resultadoT2 != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const TextSpan(text: 'Valor estandarizado ('),
-                        TextSpan(
-                          text: 't',
-                          style: const TextStyle(fontStyle: FontStyle.italic), // "t" en cursiva
+                        Text(
+                          't₁ = ${resultadoT1!.toStringAsFixed(5)}',
+                          style: const TextStyle(fontSize: 18),
                         ),
-                        TextSpan(
-                          text: z != null ? '): ${z!.toStringAsFixed(5)}' : '): ---',
+                        Text(
+                          't₂ = ${resultadoT2!.toStringAsFixed(5)}',
+                          style: const TextStyle(fontSize: 18),
                         ),
                       ],
+                    )
+                  else if (selectedOption != "En medio (t_1 ≤ T ≤ t_2)" && resultadoT != null)
+                    Text(
+                      't = ${resultadoT!.toStringAsFixed(5)}',
+                      style: const TextStyle(fontSize: 18),
                     ),
-                  ),
                   const SizedBox(height: 8),
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(fontSize: 18, color: Colors.black), // Estilo base
-                      children:[
-                        const TextSpan(text: 'Probabilidad acumulada '),
-                        TextSpan(
-                          text: 'P(T ≤ t)',
-                          style: const TextStyle(fontStyle: FontStyle.italic), // "P(T ≤ t" en cursiva
-                        ),
-                        const TextSpan(text: ': '),
-                        TextSpan(
-                          text: resultTCDF != null ? (resultTCDF!).toStringAsFixed(5) : '---',
-                        ),
-                      ]
+                  if (resultadoProbabilidad != null)
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(fontSize: 18, color: Colors.black),
+                        children: [
+                          TextSpan(
+                            text: selectedOption == "Menor P(T ≤ t)"
+                                ? 'P(T ≤ t) = '
+                                : selectedOption == "Mayor P(t ≤ T)"
+                                    ? 'P(t ≤ T) = '
+                                    : 'P(t₁ ≤ T ≤ t₂) = ',
+                          ),
+                          TextSpan(
+                            text: '${(resultadoProbabilidad! * 100).toStringAsFixed(5)}%',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  if (resultadoT == null && resultadoT1 == null && resultadoProbabilidad == null)
+                    const Text(
+                      'Ingresa todos los valores correctamente.',
+                      style: TextStyle(fontSize: 18),
+                    ),
                 ],
               ),
             ),

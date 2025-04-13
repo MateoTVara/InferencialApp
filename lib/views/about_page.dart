@@ -18,7 +18,7 @@ class AboutPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Esta es una aplicación para asistir en cálculos de estadística inferencia.',
+              'Esta es una aplicación para asistir en cálculos de estadística inferencial.',
               style: TextStyle(fontSize: 18),
               textAlign: TextAlign.justify,
             ),

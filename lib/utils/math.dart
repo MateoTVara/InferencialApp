@@ -1,4 +1,4 @@
-// lib/utils/math_functions.dart
+// lib/utils/mathdart
 import 'dart:math';
 
 double normalCDF(double z) {
@@ -19,16 +19,24 @@ double normalCDF(double z) {
   }
 }
 
-double studentsTArea(double t, int df) {
+double studentsTArea(double t, double df) {
   if (df <= 0) throw ArgumentError("Degrees of freedom must be positive");
+  
+  // Special cases for improved precision
+  if (df == 1) {
+    // Cauchy distribution
+    return 0.5 + atan(t) / pi;
+  }
+  if (t == 0) {
+    return 0.5;
+  }
 
-  double tSquared = t * t;
-  double x = df / (df + tSquared);
-  double a = df / 2.0;
-  double b = 0.5;
+  final double tSquared = t * t;
+  final double x = df / (df + tSquared);
+  final double a = df / 2.0;
+  final double b = 0.5;
 
-  double beta = incompleteBeta(x, a, b);
-
+  final double beta = incompleteBeta(x, a, b);
   return (t < 0) ? 0.5 * beta : 1.0 - 0.5 * beta;
 }
 
@@ -36,49 +44,54 @@ double incompleteBeta(double x, double a, double b) {
   if (x < 0.0 || x > 1.0) throw ArgumentError("x must be in [0, 1]");
   if (a <= 0.0 || b <= 0.0) throw ArgumentError("a and b must be positive");
 
-  double bt = exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * log(x) + b * log(1 - x));
+  final double bt = exp(
+    logGamma(a + b) - 
+    logGamma(a) - 
+    logGamma(b) + 
+    a * log(x) + 
+    b * log(1 - x)  // Changed from log1p(-x)
+  );
 
   if (x < (a + 1) / (a + b + 2)) {
-    return bt * betaContinuedFraction(x, a, b) / a;
+    return bt * betaContinuedFractionLentz(x, a, b) / a;
   } else {
-    return 1.0 - bt * betaContinuedFraction(1.0 - x, b, a) / b;
+    return 1.0 - bt * betaContinuedFractionLentz(1.0 - x, b, a) / b;
   }
 }
 
-double betaContinuedFraction(double x, double a, double b) {
-  const double epsilon = 1e-15;
-  const int maxIterations = 10000;
+double betaContinuedFractionLentz(double x, double a, double b) {
+  const double epsilon = 1e-30;
+  const double fpmin = 1e-30;
+  const int maxIterations = 100000;
 
-  double qab = a + b;
-  double qap = a + 1.0;
-  double qam = a - 1.0;
+  final double qab = a + b;
+  final double qap = a + 1.0;
+  final double qam = a - 1.0;
+  
   double c = 1.0;
-  double d = 1.0 - qab * x / qap;
-
-  if (d.abs() < epsilon) d = epsilon;
-  d = 1.0 / d;
+  double d = 1.0 / (1.0 - qab * x / qap).clampAbove(fpmin);
   double h = d;
-
+  
   for (int m = 1; m <= maxIterations; m++) {
-    int m2 = 2 * m;
-    double aa = m * (b - m) * x / ((qam + m2) * (a + m2));
-    d = 1.0 + aa * d;
-    if (d.abs() < epsilon) d = epsilon;
-    c = 1.0 + aa / c;
-    if (c.abs() < epsilon) c = epsilon;
-    d = 1.0 / d;
+    final int m2 = 2 * m;
+    final double aa1 = m * (b - m) * x / ((qam + m2) * (a + m2));
+    final double aa2 = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+
+    // First step
+    d = 1.0 + aa1 * d;
+    c = 1.0 + aa1 / c;
+    d = 1.0 / d.clampAbove(fpmin);
     h *= d * c;
 
-    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
-    d = 1.0 + aa * d;
-    if (d.abs() < epsilon) d = epsilon;
-    c = 1.0 + aa / c;
-    if (c.abs() < epsilon) c = epsilon;
-    d = 1.0 / d;
-    double del = d * c;
+    // Second step
+    d = 1.0 + aa2 * d;
+    c = 1.0 + aa2 / c;
+    d = 1.0 / d.clampAbove(fpmin);
+    final double del = d * c;
     h *= del;
 
-    if ((del - 1.0).abs() < epsilon) break;
+    // Enhanced convergence check (relative error)
+    if ((del - 1.0).abs() < 1e-15) break;
   }
   return h;
 }
@@ -118,9 +131,6 @@ double logGamma(double x) {
   return tmp + log(2.5066282746310005 * ser / x);
 }
 
-void main() {
-  int df = 15;
-  double t = -3.65;
-  double area = studentsTArea(t, df);
-  print("Area for t=$t with df=$df: ${area.toStringAsFixed(6)}"); // ~0.0012
+extension on double {
+  double clampAbove(double minimum) => this < minimum ? minimum : this;
 }
