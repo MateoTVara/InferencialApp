@@ -1,16 +1,44 @@
-# flutter_1st_test
+# 📊 InferStat – Statistical Inference Calculator (Demo)  
 
-A new Flutter project.
+A **demo** mobile app developed in Flutter for performing **statistical inference** calculations quickly and easily.  
+Includes tools for estimation and hypothesis testing with known and unknown variances.  
 
-## Getting Started
+---  
 
-This project is a starting point for a Flutter application.
+## ✨ Features  
+- **Mean and standard deviation calculations** for one or two samples  
+- Support for cases with:  
+  - **Known variance**  
+  - **Unknown variance**  
+- Intuitive tab-based interface for different statistical methods  
+- Responsive design for mobile devices  
+- **About page** with app information  
 
-A few resources to get you started if this is your first Flutter project:
+---  
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 📂 Project Structure  
+```
+lib/
+├── utils/
+│ └── math.dart                         # Statistical functions
+├── views/
+│ ├── about_page.dart                   # About screen
+│ ├── sddm_with_known_variance.dart     # Two-sample (known σ²)
+│ ├── sddm_with_unknown_variance.dart   # Two-sample (unknown σ²)
+│ ├── sdm_with_known_variance.dart      # One-sample (known σ²)
+│ ├── sdm_with_unknown_variance.dart    # One-sample (unknown σ²)
+│ └── views.dart                        # View exports
+└── main.dart                           # App entry point
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
+---  
+
+## 📜 License  
+
+`MIT License` - Free for educational and demonstrative use.  
+Modifications and distributions are permitted.  
+
+> Note: This is a demo version with limited functionality.  
+
+---  
